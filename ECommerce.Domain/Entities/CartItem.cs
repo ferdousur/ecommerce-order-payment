@@ -7,5 +7,6 @@ public class CartItem
     public Guid ProductId { get; set; }
     public int Quantity { get; set; }
     public decimal UnitPriceAtAdd { get; set; }
-
+    public Cart? Cart { get; set; }
+    public Product? Product { get; set; }
 }

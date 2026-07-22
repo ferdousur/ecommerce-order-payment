@@ -1,3 +1,6 @@
+Project Directory
+cd "/mnt/c/Users/User/OneDrive/Documents/dotnet/Assessment for Backend Engineer Raco/ecommerce-order-payment"
+
 dotnet new sln
 
 dotnet add sln ECommerce.Api/ECommerce.Api.csproj
@@ -11,7 +14,49 @@ dotnet sln add  ECommerce.Domain/ECommerce.Domain.csproj
 dotnet sln add  ECommerce.Infrastructure/ECommerce.Infrastructure.csproj
 
 
-Clean Architecture Reference seup:
-
+# 1. Application depends on Domain (Thik ache)
 dotnet add "ECommerce.Application/ECommerce.Application.csproj" reference "ECommerce.Domain/ECommerce.Domain.csproj"
 
+# 2. Infrastructure depends on Application (Thik ache)
+dotnet add "ECommerce.Infrastructure/ECommerce.Infrastructure.csproj" reference "ECommerce.Application/ECommerce.Application.csproj"
+
+# 3. API depends on Application (Eita zaroori - Controllers/Endpoints jeno Application DTO/MediatR use korte pare)
+dotnet add "ECommerce.Api/ECommerce.Api.csproj" reference "ECommerce.Application/ECommerce.Application.csproj"
+
+# 4. API depends on Infrastructure (Dependency Injection Configuration/Startup-er jonno)
+dotnet add "ECommerce.Api/ECommerce.Api.csproj" reference "ECommerce.Infrastructure/ECommerce.Infrastructure.csproj"
+
+#Nuget Packages
+# Entity Framework Core design tool
+dotnet add package --project ECommerce.Infrastructure  Microsoft.EntityFrameworkCore.Design
+
+# PostgreSQL database provider for EF Core
+dotnet add package --project ECommerce.Infrastructure Npgsql.EntityFrameworkCore.PostgreSQL
+
+# Identity Core with EF Integration
+dotnet add package --project ECommerce.Infrastructure Microsoft.AspNetCore.Identity.EntityFrameworkCore
+
+# JWT Bearer Token Authentication
+dotnet add package --project ECommerce.Infrastructure Microsoft.AspNetCore.Authentication.JwtBearer
+
+
+
+# docker run 
+sudo docker run -d \
+  --name postgres-db \
+  -e POSTGRES_DB=ECommerce-Order-Payment \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres
+
+
+#install db design package in API project
+dotnet add ECommerce.Api package Microsoft.EntityFrameworkCore.Design
+
+
+#Run Migration 
+dotnet ef migrations add InitialMigration --project ECommerce.Infrastructure --startup-project ECommerce.Api --output-dir DbContext/Migrations
+
+#Update database
+dotnet ef database update  --project ECommerce.Api

@@ -11,5 +11,8 @@ public class Order
     public string ShippingAddress { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public UserProfile? UserProfile { get; set; }
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public Payment? Payment { get; set; }
 
 }
