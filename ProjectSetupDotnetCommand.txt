@@ -1,0 +1,17 @@
+dotnet new sln
+
+dotnet add sln ECommerce.Api/ECommerce.Api.csproj
+
+dotnet sln add  ECommerce.Api/ECommerce.Api.csproj
+
+dotnet sln add  ECommerce.Application/ECommerce.Application.csproj
+
+dotnet sln add  ECommerce.Domain/ECommerce.Domain.csproj
+
+dotnet sln add  ECommerce.Infrastructure/ECommerce.Infrastructure.csproj
+
+
+Clean Architecture Reference seup:
+
+dotnet add "ECommerce.Application/ECommerce.Application.csproj" reference "ECommerce.Domain/ECommerce.Domain.csproj"
+
