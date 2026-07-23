@@ -73,3 +73,7 @@ dotnet add package --project ECommerce.Application ErrorOr
 
 #Add Swashbuckle
 dotnet add package --project ECommerce.Api Swashbuckle.AspNetCore
+
+#Admin User Credentials
+admin@ecommerce.com
+Admin@123456
