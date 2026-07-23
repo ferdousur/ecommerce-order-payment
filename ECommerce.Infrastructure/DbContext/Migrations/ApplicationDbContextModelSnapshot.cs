@@ -39,8 +39,7 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserProfileId")
-                        .IsUnique();
+                    b.HasIndex("UserProfileId");
 
                     b.ToTable("Carts");
                 });
@@ -65,11 +64,33 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CartId");
-
                     b.HasIndex("ProductId");
 
+                    b.HasIndex("CartId", "ProductId")
+                        .IsUnique();
+
                     b.ToTable("CartItems");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.Order", b =>
@@ -179,6 +200,9 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -207,6 +231,8 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Sku")
                         .IsUnique();
@@ -450,8 +476,8 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
             modelBuilder.Entity("ECommerce.Domain.Entities.Cart", b =>
                 {
                     b.HasOne("ECommerce.Domain.Entities.UserProfile", "UserProfile")
-                        .WithOne("Cart")
-                        .HasForeignKey("ECommerce.Domain.Entities.Cart", "UserProfileId")
+                        .WithMany("Carts")
+                        .HasForeignKey("UserProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -516,6 +542,17 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.Product", b =>
+                {
+                    b.HasOne("ECommerce.Domain.Entities.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.UserProfile", b =>
@@ -583,6 +620,11 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                     b.Navigation("CartItems");
                 });
 
+            modelBuilder.Entity("ECommerce.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Products");
+                });
+
             modelBuilder.Entity("ECommerce.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
@@ -599,7 +641,7 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
 
             modelBuilder.Entity("ECommerce.Domain.Entities.UserProfile", b =>
                 {
-                    b.Navigation("Cart");
+                    b.Navigation("Carts");
 
                     b.Navigation("Orders");
                 });

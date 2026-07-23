@@ -13,6 +13,20 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ECommerceRole",
                 columns: table => new
                 {
@@ -56,6 +70,7 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CategoryId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Sku = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
@@ -68,6 +83,12 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -343,9 +364,10 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_CartId",
+                name: "IX_CartItems_CartId_ProductId",
                 table: "CartItems",
-                column: "CartId");
+                columns: new[] { "CartId", "ProductId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CartItems_ProductId",
@@ -355,8 +377,7 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserProfileId",
                 table: "Carts",
-                column: "UserProfileId",
-                unique: true);
+                column: "UserProfileId");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
@@ -401,6 +422,11 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
                 table: "Payments",
                 column: "TransactionId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_CategoryId",
+                table: "Products",
+                column: "CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_Sku",
@@ -453,6 +479,9 @@ namespace ECommerce.Infrastructure.DbContext.Migrations
 
             migrationBuilder.DropTable(
                 name: "Orders");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "UserProfiles");
