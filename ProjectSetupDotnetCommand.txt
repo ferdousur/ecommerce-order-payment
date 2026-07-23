@@ -71,6 +71,5 @@ dotnet add package --project ECommerce.Application FluentValidation.DependencyIn
 dotnet add package --project ECommerce.Application ErrorOr
 
 
-
 #Add Swashbuckle
 dotnet add package --project ECommerce.Api Swashbuckle.AspNetCore
