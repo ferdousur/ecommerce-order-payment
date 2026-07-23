@@ -1,9 +1,11 @@
 using ECommerce.Application.Features.Category.Command.CreateProduct;
 using ECommerce.Application.Features.Product.Command.DeleteProduct;
 using ECommerce.Application.Features.Product.Command.UpdateProduct;
-using MediatR;
+using ECommerce.Application.Features.Product.Query.GetAllProducts;
+using ECommerce.Application.Features.Product.Query.GetProductById;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 namespace ECommerce.Api.Controllers;
 
@@ -56,6 +58,33 @@ public class ProductsController : ControllerBase
         }
 
         var result = await _mediator.Send(command);
+
+        if (result.IsError)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _mediator.Send(new GetProductByIdQuery(id));
+
+        if (result.IsError)
+        {
+            return NotFound(result.Errors);
+        }
+
+        return Ok(result.Value);
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _mediator.Send(new GetAllProductsQuery());
 
         if (result.IsError)
         {
