@@ -11,7 +11,7 @@ namespace ECommerce.Api.Controllers;
 
 [ApiController]
 [Route("api/products")]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class ProductsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -82,6 +82,7 @@ public class ProductsController : ControllerBase
 
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllProductsQuery());

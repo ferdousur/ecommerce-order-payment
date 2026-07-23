@@ -77,3 +77,7 @@ dotnet add package --project ECommerce.Api Swashbuckle.AspNetCore
 #Admin User Credentials
 admin@ecommerce.com
 Admin@123456
+
+#Customer User Credentials
+ferdousur.info@gmail.com
+Test@123

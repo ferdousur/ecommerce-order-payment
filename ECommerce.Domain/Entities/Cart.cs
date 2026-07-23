@@ -8,5 +8,4 @@ public class Cart
     public DateTime? UpdatedAt { get; set; }
     public UserProfile? UserProfile { get; set; }
     public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-
 }
