@@ -1,10 +1,13 @@
 
+using ECommerce.Infrastructure.Identity.Services;
+using Microsoft.Extensions.DependencyInjection;
+using ECommerce.Infrastructure.Repository;
+using Microsoft.Extensions.Configuration;
 using ECommerce.Infrastructure.DbContext;
 using ECommerce.Infrastructure.Identity;
+using ECommerce.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ECommerce.Infrastructure;
 
@@ -21,6 +24,8 @@ public static class DependencyInjections
         services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IUserService, UserService>();
         return services;
     }
 }
