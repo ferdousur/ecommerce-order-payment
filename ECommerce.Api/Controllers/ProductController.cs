@@ -1,5 +1,6 @@
 using ECommerce.Application.Features.Category.Command.CreateProduct;
 using ECommerce.Application.Features.Product.Command.DeleteProduct;
+using ECommerce.Application.Features.Product.Command.UpdateProduct;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,5 +44,24 @@ public class ProductsController : ControllerBase
         }
 
         return NoContent();
+    }
+
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductCommand command)
+    {
+        if (id != command.Id)
+        {
+            return BadRequest("Route Id and Body Id mismatch.");
+        }
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsError)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return Ok(result.Value);
     }
 }

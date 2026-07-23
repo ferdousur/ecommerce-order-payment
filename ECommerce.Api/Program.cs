@@ -34,6 +34,15 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-await DbSeeder.SeedAsync(app);
+
+try
+{
+    await DbSeeder.SeedAsync(app);
+    Console.WriteLine("--> Database Seeded Successfully!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"--> Error Seeding Database: {ex.Message}");
+}
 app.Run();
 
