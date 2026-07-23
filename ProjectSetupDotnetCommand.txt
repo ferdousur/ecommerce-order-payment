@@ -60,3 +60,17 @@ dotnet ef migrations add InitialMigration --project ECommerce.Infrastructure --s
 
 #Update database
 dotnet ef database update  --project ECommerce.Api
+
+
+#MediatR Pattern
+
+dotnet add package --project ECommerce.Application MediatR
+dotnet add package --project ECommerce.Application FluentValidation
+dotnet add package --project ECommerce.Application FluentValidation.DependencyInjectionExtensions
+
+dotnet add package --project ECommerce.Application ErrorOr
+
+
+
+#Add Swashbuckle
+dotnet add package --project ECommerce.Api Swashbuckle.AspNetCore
