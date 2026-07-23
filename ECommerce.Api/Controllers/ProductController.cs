@@ -1,4 +1,5 @@
 using ECommerce.Application.Features.Category.Command.CreateProduct;
+using ECommerce.Application.Features.Product.Command.DeleteProduct;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,5 +29,19 @@ public class ProductsController : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var command = new DeleteProductCommand(id);
+        var result = await _mediator.Send(command);
+
+        if (result.IsError)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return NoContent();
     }
 }
