@@ -2,6 +2,7 @@
 using ECommerce.Infrastructure.Identity.Services;
 using Microsoft.Extensions.DependencyInjection;
 using ECommerce.Infrastructure.Repository;
+using ECommerce.Infrastructure.Payments;
 using Microsoft.Extensions.Configuration;
 using ECommerce.Infrastructure.DbContext;
 using ECommerce.Infrastructure.Identity;
@@ -26,6 +27,7 @@ public static class DependencyInjections
             .AddDefaultTokenProviders();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPaymentProcessor, StripePaymentProcessor>();
         return services;
     }
 }
