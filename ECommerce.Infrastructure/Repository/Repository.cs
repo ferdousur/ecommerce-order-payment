@@ -50,4 +50,8 @@ public class Repository<T> : IRepository<T> where T : class
     {
         await _dbContext.SaveChangesAsync();
     }
+    public IQueryable<T> GetQueryable()
+    {
+        return _dbContext.Set<T>().AsQueryable();
+    }
 }

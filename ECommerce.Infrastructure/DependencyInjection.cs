@@ -28,6 +28,7 @@ public static class DependencyInjections
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IPaymentProcessor, StripePaymentProcessor>();
+        services.AddScoped<IPaymentWebhookHandler, StripeWebhookHandler>();
         return services;
     }
 }

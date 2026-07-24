@@ -8,4 +8,5 @@ public interface IRepository<T> where T : class
     Task SaveChangesAsync();
     Task UpdateAsync(T entity);
     Task DeleteAsync(Guid id);
+    IQueryable<T> GetQueryable();
 }

@@ -79,8 +79,11 @@ admin@ecommerce.com
 Admin@123456
 
 #Customer User Credentials
-ferdousur.info@gmail.com
-Test@123
+{
+  "userName": "ferdousur.info@gmail.com",
+  "password": "Test@123"
+}
 
 #stripe package
 dotnet add package --project ECommerce.Infrastructure Stripe.net
+dotnet add ECommerce.Application package Microsoft.EntityFrameworkCore

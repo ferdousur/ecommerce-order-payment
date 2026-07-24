@@ -1,10 +1,12 @@
-using ECommerce.Application.Checkout.DTOs;
 using ECommerce.Application.Cores.Abstractions;
 using ECommerce.Application.Interfaces;
-using ECommerce.Application.Payments.DTOs;
+using Microsoft.EntityFrameworkCore;
 using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
 using ErrorOr;
+
+using PaymentRequest = ECommerce.Application.Payments.DTOs.PaymentRequest;
+using CheckoutResponse = ECommerce.Application.Checkout.DTOs.CheckoutResponse;
 
 namespace ECommerce.Application.Features.Orders.Commands.Checkout;
 
@@ -26,23 +28,25 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
 
     public async Task<ErrorOr<CheckoutResponse>> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
-        // 1. Fetch Cart
-        var allCarts = await _cartRepository.GetAllAsync();
-        var cart = allCarts.FirstOrDefault(c => c.Id == request.CartId && c.UserProfileId == request.UserProfileId);
+        // 🎯 ২. GetQueryable() + Include দিয়ে CartItems ও Product সহ কার্ট লোড করা
+        var cart = await _cartRepository.GetQueryable()
+            .Include(c => c.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserProfileId == request.UserProfileId, cancellationToken);
 
         if (cart is null || cart.CartItems is null || !cart.CartItems.Any())
         {
             return Error.NotFound("Cart.NotFound", "Cart is empty or was not found.");
         }
 
-        // 2. Calculate Total Amount
+        // 3. Calculate Total Amount
         decimal totalAmount = cart.CartItems.Sum(item => item.Quantity * item.UnitPriceAtAdd);
         if (totalAmount <= 0)
         {
             return Error.Validation("Cart.InvalidAmount", "Total amount must be greater than zero.");
         }
 
-        // 3. Create Order Entity
+        // 4. Create Order Entity
         var order = new Order
         {
             Id = Guid.CreateVersion7(),
@@ -61,7 +65,7 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             }).ToList()
         };
 
-        // 4. Create Payment Entity
+        // 5. Create Payment Entity
         var payment = new Payment
         {
             Id = Guid.CreateVersion7(),
@@ -77,14 +81,14 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
         await _orderRepository.CreateAsync(order);
         await _orderRepository.SaveChangesAsync();
 
-        // 5. Select Strategy
+        // 6. Select Strategy
         var processor = _paymentProcessors.FirstOrDefault(p => p.Provider == request.PaymentProvider);
         if (processor is null)
         {
             return Error.Failure("Payment.UnsupportedProvider", $"Payment provider '{request.PaymentProvider}' is not supported.");
         }
 
-        // 6. Execute Payment Request
+        // 7. Execute Payment Request
         var paymentRequest = new PaymentRequest(order.Id, totalAmount, "usd");
         var paymentResult = await processor.ProcessPaymentAsync(paymentRequest);
 
@@ -97,12 +101,12 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             return Error.Failure("Payment.Failed", paymentResult.ErrorMessage ?? "Payment processing failed.");
         }
 
-        // 7. Update Payment Entity with Transaction details
+        // 8. Update Payment Entity with Transaction details
         payment.TransactionId = paymentResult.TransactionId;
         payment.RawResponse = paymentResult.RawResponse;
         await _orderRepository.SaveChangesAsync();
 
-        // 8. Return Response
+        // 9. Return Response
         return new CheckoutResponse(
             OrderId: order.Id,
             OrderStatus: order.Status,

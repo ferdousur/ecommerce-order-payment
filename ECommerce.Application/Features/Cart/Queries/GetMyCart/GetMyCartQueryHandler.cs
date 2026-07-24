@@ -1,7 +1,9 @@
 using ECommerce.Application.Cores.Abstractions;
 using ECommerce.Application.DTOs.Cart;
 using ECommerce.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using ErrorOr;
+
 
 namespace ECommerce.Application.Features.Cart.Queries.GetMyCart;
 
@@ -16,8 +18,11 @@ public class GetMyCartQueryHandler : IQueryHandler<GetMyCartQuery, ErrorOr<CartR
 
     public async Task<ErrorOr<CartResponseDto>> Handle(GetMyCartQuery request, CancellationToken cancellationToken)
     {
-        var allCarts = await _cartRepository.GetAllAsync();
-        var cart = allCarts.FirstOrDefault(c => c.UserProfileId == request.UserProfileId);
+        // 🎯 IQueryable দিয়ে কার্ট, তার আইটেম এবং প্রোডাক্ট লোড করা
+        var cart = await _cartRepository.GetQueryable()
+            .Include(c => c.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserProfileId == request.UserProfileId);
 
         if (cart is null)
         {

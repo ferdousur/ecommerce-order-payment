@@ -1,19 +1,31 @@
-
-using ECommerce.Application.Payments.DTOs;
 using ECommerce.Application.Interfaces;
+using ECommerce.Application.Payments.DTOs;
 using ECommerce.Domain.Enums;
+using Microsoft.Extensions.Configuration;
 using Stripe;
 
 namespace ECommerce.Infrastructure.Payments;
 
 public class StripePaymentProcessor : IPaymentProcessor
 {
+    private readonly IConfiguration _configuration;
+
     public PaymentProvider Provider => PaymentProvider.Stripe;
+
+    // 🎯 Constructor Dependency Injection-er maddhome IConfiguration niye asha
+    public StripePaymentProcessor(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
 
     public async Task<PaymentResult> ProcessPaymentAsync(PaymentRequest request)
     {
         try
         {
+            // 🎯 appsettings.json theke SecretKey niye Stripe SDK global config-e set kora
+            var secretKey = _configuration["Stripe:SecretKey"];
+            StripeConfiguration.ApiKey = secretKey;
+
             var options = new PaymentIntentCreateOptions
             {
                 Amount = (long)(request.Amount * 100), // Convert Dollars to Cents
@@ -36,6 +48,13 @@ public class StripePaymentProcessor : IPaymentProcessor
             );
         }
         catch (StripeException ex)
+        {
+            return new PaymentResult(
+                IsSuccess: false,
+                ErrorMessage: ex.Message
+            );
+        }
+        catch (Exception ex)
         {
             return new PaymentResult(
                 IsSuccess: false,

@@ -15,6 +15,7 @@ public static class DependencyInjections
             cfg.RegisterServicesFromAssembly(typeof(IUserService).Assembly);
             cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
+       
         return services;
     }
 }
