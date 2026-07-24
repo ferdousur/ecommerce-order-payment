@@ -4,12 +4,14 @@ using ECommerce.Application.Features.Payments.Commands.ExecuteBkashPayment;
 using ECommerce.Application.Features.Payments.Commands.ProcessStripeWebhook;
 using ErrorOr;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerce.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Customer")]
 public class PaymentsController : ControllerBase
 {
     private readonly ISender _sender;
@@ -23,6 +25,7 @@ public class PaymentsController : ControllerBase
     /// Stripe Webhook Handler
     /// </summary>
     [HttpPost("webhook")]
+    [AllowAnonymous]
     public async Task<IActionResult> StripeWebhook()
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();

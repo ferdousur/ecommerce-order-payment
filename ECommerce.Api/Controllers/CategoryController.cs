@@ -9,7 +9,7 @@ namespace ECommerce.Api.Controllers;
 
 [ApiController]
 [Route("api/categories")]
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class CategoryCreate : ControllerBase
 {
     private readonly IMediator _mediator;

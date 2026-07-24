@@ -94,3 +94,8 @@ Test Wallet Credentials:
 Test Wallet Number: 01770618575 (বা অন্য যেকোনো ১১ ডিজিটের বিডি নম্বর)
 Test OTP: 123456
 Test PIN: 12345
+
+
+#webhook test
+npx @stripe/cli listen --forward-to http://localhost:5004/api/payments/webhook
+npx @stripe/cli trigger payment_intent.succeeded --add payment_intent:metadata[OrderId]=019f95............
