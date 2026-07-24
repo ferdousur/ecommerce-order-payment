@@ -11,6 +11,6 @@ public record UpdateProductCommand(
     decimal Price,
     int StockQuantity,
     string? SKU,
-    Guid CategoryId,
+    List<Guid> CategoryIds,
     bool IsActive
 ) : ICommand<ErrorOr<ProductResponseDto>>;

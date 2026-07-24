@@ -1,4 +1,3 @@
-using ECommerce.Application.Features.Category.Command.CreateProduct;
 using ECommerce.Application.Features.Product.Command.DeleteProduct;
 using ECommerce.Application.Features.Product.Command.UpdateProduct;
 using ECommerce.Application.Features.Product.Query.GetAllProducts;
@@ -6,6 +5,7 @@ using ECommerce.Application.Features.Product.Query.GetProductById;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
+using ECommerce.Application.Features.Product.Command.CreateProduct;
 
 namespace ECommerce.Api.Controllers;
 

@@ -1,9 +1,8 @@
-using ECommerce.Application.Categories.DTOs;
 using ECommerce.Application.Cores.Abstractions;
-using ECommerce.Application.DTOs.Product;
+using ECommerce.Application.Products.DTOs;
 using ErrorOr;
 
-namespace ECommerce.Application.Features.Category.Command.CreateProduct;
+namespace ECommerce.Application.Features.Product.Command.CreateProduct;
 
 public record CreateProductCommand(
     string Name,
@@ -11,6 +10,6 @@ public record CreateProductCommand(
     decimal Price,
     int StockQuantity,
     string? SKU,
-    Guid CategoryId,
+    List<Guid> CategoryIds,
     bool IsActive = true
-) : ICommand<ErrorOr<CreateProductDto>>;
+) : ICommand<ErrorOr<ProductResponseDto>>;

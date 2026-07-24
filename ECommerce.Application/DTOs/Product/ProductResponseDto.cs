@@ -8,7 +8,6 @@ public record ProductResponseDto(
     int StockQuantity,
     string? SKU,
     bool IsActive,
-    Guid CategoryId,
-    string? CategoryName,
+    List<string> CategoryNames,
     DateTime CreatedAtUtc
 );

@@ -71,11 +71,27 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithOne(p => p.Order)
             .HasForeignKey<Payment>(p => p.OrderId);
 
-        // Many-to-One: Product -> Category
-        builder.Entity<Product>()
-            .HasOne(p => p.Category)
-            .WithMany(c => c.Products)
-            .HasForeignKey(p => p.CategoryId);
+
+        //composite key 
+        builder.Entity<ProductCategory>()
+            .HasKey(cp => new { cp.CategoryId, cp.ProductId });
+
+
+        //Many ProductCategory to One Category
+        builder.Entity<ProductCategory>()
+            .HasOne(cp => cp.Category)
+            .WithMany(c => c.ProductCategories)
+            .HasForeignKey(cp => cp.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        //Many ProductCategory to One Product
+        builder.Entity<ProductCategory>()
+            .HasOne(cp => cp.Product)
+            .WithMany(p => p.ProductCategories)
+            .HasForeignKey(cp => cp.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
 
         // Unique Constraint for Product SKU
         builder.Entity<Product>()
@@ -96,4 +112,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<ProductCategory> ProductCategories { get; set; }
+
 }

@@ -24,8 +24,15 @@ public class UpdateProductCommandValidator : AbstractValidator<UpdateProductComm
         RuleFor(x => x.StockQuantity)
             .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
 
-        RuleFor(x => x.CategoryId)
-            .NotEmpty().WithMessage("Category is required.");
+        // CategoryIds (List<Guid>)-এর ভ্যালিডেশন
+        RuleFor(x => x.CategoryIds)
+            .NotEmpty().WithMessage("At least one category is required.")
+            .Must(ids => ids != null && ids.Any()).WithMessage("Category list cannot be empty.");
+
+        // লিস্টের ভেতরের প্রতিটি Guid চেক করা
+        RuleForEach(x => x.CategoryIds)
+            .NotEmpty().WithMessage("Category ID cannot be empty.")
+            .Must(id => id != Guid.Empty).WithMessage("A valid Category Id must be provided.");
 
         RuleFor(x => x.SKU)
             .MaximumLength(50).WithMessage("SKU must not exceed 50 characters.")

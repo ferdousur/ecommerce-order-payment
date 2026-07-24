@@ -4,8 +4,4 @@ using ErrorOr;
 
 namespace ECommerce.Application.Features.Category.Command.CreateCategory;
 
-public record CreateCategoryCommand(
-    string Name,
-    string? Description,
-    bool IsActive = true
-) : ICommand<ErrorOr<CategoryDto>>;
+public record CreateCategoryCommand(string Name, string? Description, Guid? ParentCategoryId) : ICommand<ErrorOr<CategoryDto>>;

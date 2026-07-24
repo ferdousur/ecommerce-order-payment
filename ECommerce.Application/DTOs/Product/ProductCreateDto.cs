@@ -1,4 +1,4 @@
-namespace ECommerce.Application.DTOs.Product;
+namespace ECommerce.Application.Products.DTOs;
 
 public record CreateProductDto(
     string Name,
@@ -6,6 +6,6 @@ public record CreateProductDto(
     decimal Price,
     int StockQuantity,
     string? SKU,
-    Guid CategoryId,
+    List<Guid> CategoryIds,
     bool IsActive = true
 );

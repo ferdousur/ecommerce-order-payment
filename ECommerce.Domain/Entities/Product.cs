@@ -15,4 +15,5 @@ public class Product
     public Category? Category { get; set; }
     public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<ProductCategory> ProductCategories { get; set; } = [];
 }

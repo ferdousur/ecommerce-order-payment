@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ECommerce.Application.Interfaces;
 using ECommerce.Infrastructure.DbContext;
 using Microsoft.EntityFrameworkCore;
@@ -53,5 +54,10 @@ public class Repository<T> : IRepository<T> where T : class
     public IQueryable<T> GetQueryable()
     {
         return _dbContext.Set<T>().AsQueryable();
+    }
+
+    public async Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await _dbContext.Set<T>().Where(predicate).ToListAsync();
     }
 }
