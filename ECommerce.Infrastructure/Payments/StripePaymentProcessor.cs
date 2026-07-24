@@ -62,4 +62,9 @@ public class StripePaymentProcessor : IPaymentProcessor
             );
         }
     }
+
+    public Task<PaymentResult> CompletePaymentAsync(string paymentId, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

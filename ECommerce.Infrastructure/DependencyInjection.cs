@@ -29,6 +29,8 @@ public static class DependencyInjections
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IPaymentProcessor, StripePaymentProcessor>();
         services.AddScoped<IPaymentWebhookHandler, StripeWebhookHandler>();
+        services.AddHttpClient<BkashPaymentProcessor>();
+        services.AddScoped<IPaymentProcessor, BkashPaymentProcessor>();
         return services;
     }
 }
