@@ -99,3 +99,11 @@ Test PIN: 12345
 #webhook test
 npx @stripe/cli listen --forward-to http://localhost:5004/api/payments/webhook
 npx @stripe/cli trigger payment_intent.succeeded --add payment_intent:metadata[OrderId]=019f95............
+
+
+#install package redis
+dotnet add package --project ECommerce.Api Microsoft.Extensions.Caching.StackExchangeRedis
+
+
+#Redis 
+sudo docker run -d --name ecommerce-redis -p 6379:6379 -v redis_data:/data redis:alpine

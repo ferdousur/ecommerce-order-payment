@@ -1,7 +1,7 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text;
 
 
 namespace ECommerce.Api;
@@ -48,6 +48,11 @@ public static class DependencyInjections
             {
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
             });
+        });
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Redis");
+            options.InstanceName = "ECommerce_";
         });
 
         return services;

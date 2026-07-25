@@ -12,6 +12,11 @@ builder.Services.AddControllers();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHost(builder.Configuration);
 builder.Services.AddApplication();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+
 var app = builder.Build();
 
 app.MapControllers();
