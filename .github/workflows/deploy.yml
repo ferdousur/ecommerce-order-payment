@@ -35,11 +35,10 @@ jobs:
         sshpass -p "$SSH_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub $VM_USER@$VM_HOST
         ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "mkdir -p ~/app/ecommerce-order-payment"
 
-    # 2. Copy files to Azure VM using secure SCP
+   # 2. Copy files to Azure VM (ignoring .git directory)
     - name: Copy files to Azure VM
       run: |
-        scp -i ~/.ssh/id_rsa -r . ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_HOST }}:~/app/ecommerce-order-payment
-
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa" --exclude '.git' --exclude 'bin' --exclude 'obj' . ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_HOST }}:~/app/ecommerce-order-payment
     # 3. Run Docker Compose on Azure VM via SSH
     - name: Run Docker Compose on Azure VM
       run: |
