@@ -24,7 +24,7 @@ jobs:
     - name: Setup SSH Key
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.AZURE_VM_SSH_KEY }}" | base64 -d > ~/.ssh/id_rsa
+        echo "${{ secrets.AZURE_VM_SSH_KEY }}" | base64 -d | tr -d '\r' > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.AZURE_VM_HOST }} >> ~/.ssh/known_hosts
 
