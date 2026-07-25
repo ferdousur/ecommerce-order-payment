@@ -20,8 +20,8 @@ jobs:
     - name: Run Unit Tests
       run: dotnet test --configuration Release --no-restore
 
-    # 1. Automatically generate fresh SSH keys and copy to server using SSHpass
-    - name: Setup Auto SSH Key & Authorize Server
+    # 1. Automatically generate fresh SSH keys and prepare remote folder
+    - name: Setup Auto SSH Key & Prepare Server Directory
       env:
         SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
         VM_HOST: ${{ secrets.AZURE_VM_HOST }}
@@ -31,8 +31,9 @@ jobs:
         ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
         ssh-keyscan -H $VM_HOST >> ~/.ssh/known_hosts
         
-        # Automatically send public key to server using password
+        # Send public key to server and create target directory
         sshpass -p "$SSH_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub $VM_USER@$VM_HOST
+        ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "mkdir -p ~/app/ecommerce-order-payment"
 
     # 2. Copy files to Azure VM using secure SCP
     - name: Copy files to Azure VM
