@@ -45,6 +45,7 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
             Stock = request.StockQuantity,
             Sku = request.SKU ?? string.Empty,
             IsActive = request.IsActive,
+            CategoryId = categories.First().Id,
 
             // 4. Populate Many-to-Many Join Table (ProductCategories)
             ProductCategories = categories.Select(c => new Domain.Entities.ProductCategory
