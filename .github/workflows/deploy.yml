@@ -1,0 +1,45 @@
+name: CI/CD Pipeline - Test & Deploy to Azure
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 1. Setup .NET SDK for running unit tests
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x' # Adjust according to your project's .NET version
+
+    # 2. Run unit tests
+    - name: Run Unit Tests
+      run: dotnet test --configuration Release --no-restore
+
+    # 3. Copy project files to Azure VM using SSH key
+    - name: Copy files to Azure VM via SCP
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.AZURE_VM_HOST }}
+        username: ${{ secrets.AZURE_VM_USERNAME }}
+        key: ${{ secrets.AZURE_VM_SSH_KEY }}
+        source: "."
+        target: "~/app/ecommerce-order-payment"
+
+    # 4. Run Docker Compose on Azure VM to rebuild and start containers
+    - name: Run Docker Compose on Azure VM via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AZURE_VM_HOST }}
+        username: ${{ secrets.AZURE_VM_USERNAME }}
+        key: ${{ secrets.AZURE_VM_SSH_KEY }}
+        script: |
+          cd ~/app/ecommerce-order-payment
+          sudo docker-compose up --build -d --no-deps backend
+          sudo docker system prune -f
