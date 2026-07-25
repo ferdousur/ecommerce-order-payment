@@ -20,29 +20,39 @@ jobs:
     - name: Run Unit Tests
       run: dotnet test --configuration Release --no-restore
 
-    # 1. Automatically generate fresh SSH keys and prepare remote folder
-    - name: Setup Auto SSH Key & Prepare Server Directory
+    # 1. Clean Sync using rsync with automatic SSH Key setup
+    - name: Deploy via Rsync
       env:
         SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
         VM_HOST: ${{ secrets.AZURE_VM_HOST }}
         VM_USER: ${{ secrets.AZURE_VM_USERNAME }}
       run: |
-        sudo apt-get install -y sshpass
-        ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+        sudo apt-get install -y sshpass rsync
+        mkdir -p ~/.ssh
         ssh-keyscan -H $VM_HOST >> ~/.ssh/known_hosts
         
-        # Send public key to server and create target directory
+        # Generate key and push to server without prompting
+        ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
         sshpass -p "$SSH_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub $VM_USER@$VM_HOST
-        ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "mkdir -p ~/app/ecommerce-order-payment"
+        
+        # Ensure remote directory is owned by the user
+        ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "sudo mkdir -p ~/app/ecommerce-order-payment && sudo chown -R $VM_USER:$VM_USER ~/app/ecommerce-order-payment"
+        
+        # Rsync project files (excluding heavy/useless folders)
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+          --exclude '.git/' \
+          --exclude 'bin/' \
+          --exclude 'obj/' \
+          --exclude '.vs/' \
+          . $VM_USER@$VM_HOST:~/app/ecommerce-order-payment/
 
-   # 2. Copy files to Azure VM (ignoring .git directory)
-    - name: Copy files to Azure VM
+    # 2. Run Docker Compose on Remote Server
+    - name: Run Docker Compose
+      env:
+        VM_HOST: ${{ secrets.AZURE_VM_HOST }}
+        VM_USER: ${{ secrets.AZURE_VM_USERNAME }}
       run: |
-        rsync -avz -e "ssh -i ~/.ssh/id_rsa" --exclude '.git' --exclude 'bin' --exclude 'obj' . ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_HOST }}:~/app/ecommerce-order-payment
-    # 3. Run Docker Compose on Azure VM via SSH
-    - name: Run Docker Compose on Azure VM
-      run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.AZURE_VM_USERNAME }}@${{ secrets.AZURE_VM_HOST }} << 'EOF'
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $VM_USER@$VM_HOST << 'EOF'
           cd ~/app/ecommerce-order-payment
           sudo docker-compose up --build -d --no-deps backend
           sudo docker system prune -f
