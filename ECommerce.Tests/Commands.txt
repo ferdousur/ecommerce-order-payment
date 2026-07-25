@@ -1,0 +1,11 @@
+dotnet sln add ECommerce.Tests/ECommerce.Tests.csproj
+
+dotnet add ECommerce.Tests reference ECommerce.Domain/ECommerce.Domain.csproj
+dotnet add ECommerce.Tests reference ECommerce.Application/ECommerce.Application.csproj
+dotnet add ECommerce.Tests reference ECommerce.Infrastructure/ECommerce.Infrastructure.csproj
+dotnet add ECommerce.Tests reference ECommerce.Api/ECommerce.Api.csproj
+
+dotnet add ECommerce.Tests package Moq
+dotnet add ECommerce.Tests package FluentAssertions
+dotnet add ECommerce.Tests package Microsoft.AspNetCore.Mvc.Testing
+dotnet add ECommerce.Tests package MockQueryable.Moq
