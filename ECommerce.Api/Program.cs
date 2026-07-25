@@ -1,7 +1,9 @@
 using ECommerce.Api;
 using ECommerce.Application;
 using ECommerce.Infrastructure;
+using ECommerce.Infrastructure.DbContext;
 using ECommerce.Infrastructure.Seeding;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +33,23 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var dbContext = services.GetRequiredService<ApplicationDbContext>();
+
+        // Create the database if it doesn't exist and apply any pending migrations automatically
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database.");
+    }
+}
 
 
 try
