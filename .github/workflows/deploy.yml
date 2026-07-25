@@ -54,6 +54,6 @@ jobs:
       run: |
         ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $VM_USER@$VM_HOST << 'EOF'
           cd ~/app/ecommerce-order-payment
-          sudo docker-compose up --build -d --no-deps backend
-          sudo docker system prune -f
+          docker-compose up --build -d --no-deps backend
+          docker system prune -f
         EOF
