@@ -1,4 +1,5 @@
 using ECommerce.Api;
+using ECommerce.Api.Middlewares;
 using ECommerce.Application;
 using ECommerce.Infrastructure;
 using ECommerce.Infrastructure.DbContext;
@@ -21,7 +22,13 @@ builder.Logging.AddDebug();
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseCors("AllowAll");
+
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
@@ -33,8 +40,6 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.UseAuthentication();
-app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
