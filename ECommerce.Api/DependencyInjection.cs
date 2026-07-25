@@ -54,6 +54,15 @@ public static class DependencyInjections
             options.Configuration = configuration.GetConnectionString("Redis");
             options.InstanceName = "ECommerce_";
         });
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
 
         return services;
     }

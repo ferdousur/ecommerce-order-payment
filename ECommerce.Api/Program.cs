@@ -21,6 +21,8 @@ builder.Logging.AddDebug();
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
+
 app.MapControllers();
 
 if (app.Environment.IsDevelopment())
