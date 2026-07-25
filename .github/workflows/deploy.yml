@@ -20,7 +20,7 @@ jobs:
     - name: Run Unit Tests
       run: dotnet test --configuration Release --no-restore
 
-   # 1. Clean Sync using rsync with automatic SSH Key setup
+    # 1. Clean Sync using rsync with automatic SSH Key setup
     - name: Deploy via Rsync
       env:
         SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
@@ -30,14 +30,14 @@ jobs:
         sudo apt-get install -y sshpass rsync
         mkdir -p ~/.ssh
         ssh-keyscan -H $VM_HOST >> ~/.ssh/known_hosts
-        
+
         # Generate key and push to server without prompting
         ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
         sshpass -p "$SSH_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub $VM_USER@$VM_HOST
-        
+
         # Create directory without sudo since the user owns their home directory
         ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "mkdir -p ~/app/ecommerce-order-payment"
-        
+
         # Rsync project files (excluding heavy/useless folders)
         rsync -avz -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
           --exclude '.git/' \
@@ -46,17 +46,14 @@ jobs:
           --exclude '.vs/' \
           . $VM_USER@$VM_HOST:~/app/ecommerce-order-payment/
 
-# 2. Run Docker Compose on Remote Server using sudo properly
+    # 2. Run Docker Compose on Remote Server (NOPASSWD sudo — set up once on the VM via `sudo visudo`)
     - name: Run Docker Compose
       env:
-        SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
         VM_HOST: ${{ secrets.AZURE_VM_HOST }}
         VM_USER: ${{ secrets.AZURE_VM_USERNAME }}
       run: |
         ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $VM_USER@$VM_HOST << 'EOF'
           cd ~/app/ecommerce-order-payment
-          # Since user has passwordless sudo, we pass password via echo to sudo if needed, 
-          # or simply run with sudo since NOPASSWD is set.
-          echo "$SSH_PASSWORD" | sudo -S docker-compose up --build -d --no-deps backend
-          echo "$SSH_PASSWORD" | sudo -S docker system prune -f
+          sudo docker-compose up --build -d --no-deps backend
+          sudo docker system prune -f
         EOF
