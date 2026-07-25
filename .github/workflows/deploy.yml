@@ -20,7 +20,7 @@ jobs:
     - name: Run Unit Tests
       run: dotnet test --configuration Release --no-restore
 
-    # 1. Clean Sync using rsync with automatic SSH Key setup
+   # 1. Clean Sync using rsync with automatic SSH Key setup
     - name: Deploy via Rsync
       env:
         SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
@@ -35,8 +35,8 @@ jobs:
         ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -N ""
         sshpass -p "$SSH_PASSWORD" ssh-copy-id -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa.pub $VM_USER@$VM_HOST
         
-        # Ensure remote directory is owned by the user
-        ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "sudo mkdir -p ~/app/ecommerce-order-payment && sudo chown -R $VM_USER:$VM_USER ~/app/ecommerce-order-payment"
+        # Create directory without sudo since the user owns their home directory
+        ssh -i ~/.ssh/id_rsa $VM_USER@$VM_HOST "mkdir -p ~/app/ecommerce-order-payment"
         
         # Rsync project files (excluding heavy/useless folders)
         rsync -avz -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
