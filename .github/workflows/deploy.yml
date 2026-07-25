@@ -46,14 +46,17 @@ jobs:
           --exclude '.vs/' \
           . $VM_USER@$VM_HOST:~/app/ecommerce-order-payment/
 
-# 2. Run Docker Compose on Remote Server
+# 2. Run Docker Compose on Remote Server using sudo properly
     - name: Run Docker Compose
       env:
+        SSH_PASSWORD: ${{ secrets.AZURE_VM_PASSWORD }}
         VM_HOST: ${{ secrets.AZURE_VM_HOST }}
         VM_USER: ${{ secrets.AZURE_VM_USERNAME }}
       run: |
         ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $VM_USER@$VM_HOST << 'EOF'
           cd ~/app/ecommerce-order-payment
-          # Refresh group permissions in non-interactive shell and run docker-compose
-          sg docker -c "docker-compose up --build -d --no-deps backend && docker system prune -f"
+          # Since user has passwordless sudo, we pass password via echo to sudo if needed, 
+          # or simply run with sudo since NOPASSWD is set.
+          echo "$SSH_PASSWORD" | sudo -S docker-compose up --build -d --no-deps backend
+          echo "$SSH_PASSWORD" | sudo -S docker system prune -f
         EOF
