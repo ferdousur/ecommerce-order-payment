@@ -46,7 +46,7 @@ jobs:
           --exclude '.vs/' \
           . $VM_USER@$VM_HOST:~/app/ecommerce-order-payment/
 
-    # 2. Run Docker Compose on Remote Server
+# 2. Run Docker Compose on Remote Server
     - name: Run Docker Compose
       env:
         VM_HOST: ${{ secrets.AZURE_VM_HOST }}
@@ -54,6 +54,6 @@ jobs:
       run: |
         ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $VM_USER@$VM_HOST << 'EOF'
           cd ~/app/ecommerce-order-payment
-          docker-compose up --build -d --no-deps backend
-          docker system prune -f
+          # Refresh group permissions in non-interactive shell and run docker-compose
+          sg docker -c "docker-compose up --build -d --no-deps backend && docker system prune -f"
         EOF
