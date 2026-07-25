@@ -46,6 +46,8 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ECommerce-Order-Payment;Username=postgres;Password=postgres
       - Redis=redis:6379
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
