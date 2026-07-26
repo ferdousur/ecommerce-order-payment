@@ -121,10 +121,10 @@ public class UserService : IUserService
 
         var claims = new Claim[]
         {
-            new("UserId", user.Id.ToString()),
+            new("UserProfileId", userProfile!.Id.ToString()),
             new(ClaimTypes.Email, user.Email!),
             new(ClaimTypes.Role, role),
-            new("UserProfileId", userProfile!.Id.ToString())
+
         };
 
         var descriptor = new SecurityTokenDescriptor
