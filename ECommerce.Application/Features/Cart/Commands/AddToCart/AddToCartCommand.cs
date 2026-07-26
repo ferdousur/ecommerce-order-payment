@@ -5,7 +5,6 @@ using ErrorOr;
 namespace ECommerce.Application.Features.Cart.Commands.AddToCart;
 
 public record AddToCartCommand(
-    Guid UserProfileId,
     Guid ProductId,
     int Quantity
 ) : ICommand<ErrorOr<CartResponseDto>>;

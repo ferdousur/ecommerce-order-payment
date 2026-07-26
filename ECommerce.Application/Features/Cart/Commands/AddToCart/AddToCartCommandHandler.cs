@@ -10,18 +10,28 @@ public class AddToCartCommandHandler : ICommandHandler<AddToCartCommand, ErrorOr
 {
     private readonly IRepository<Domain.Entities.Cart> _cartRepository;
     private readonly IRepository<Domain.Entities.Product> _productRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public AddToCartCommandHandler(
         IRepository<Domain.Entities.Cart> cartRepository,
-        IRepository<Domain.Entities.Product> productRepository)
+        IRepository<Domain.Entities.Product> productRepository,
+        ICurrentUserService currentUserService)
     {
         _cartRepository = cartRepository;
         _productRepository = productRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ErrorOr<CartResponseDto>> Handle(AddToCartCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validate Product & Stock
+        // 1. Id Get from Token
+        var userProfileId = _currentUserService.UserId;
+        if (userProfileId is null || userProfileId == Guid.Empty)
+        {
+            return Error.Unauthorized("User.Unauthorized", "User is not authenticated or token is invalid.");
+        }
+
+        // 2. Validate Product & Stock
         var product = await _productRepository.GetByIdAsync(request.ProductId);
         if (product is null || !product.IsActive)
         {
@@ -33,24 +43,23 @@ public class AddToCartCommandHandler : ICommandHandler<AddToCartCommand, ErrorOr
             return Error.Validation("Cart.StockExceeded", $"Insufficient stock. Only {product.Stock} available.");
         }
 
-        // 2. Fetch Existing Cart for UserProfile
+        // 3. Fetch Existing Cart for UserProfile 
         var allCarts = await _cartRepository.GetAllAsync();
-        var cart = allCarts.FirstOrDefault(c => c.UserProfileId == request.UserProfileId);
+        var cart = allCarts.FirstOrDefault(c => c.UserProfileId == userProfileId.Value);
 
         if (cart is null)
         {
-            // First time cart creation
             cart = new Domain.Entities.Cart
             {
                 Id = Guid.CreateVersion7(),
-                UserProfileId = request.UserProfileId,
+                UserProfileId = userProfileId.Value,
                 CreatedAt = DateTime.UtcNow,
                 CartItems = new List<CartItem>()
             };
             await _cartRepository.CreateAsync(cart);
         }
 
-        // 3. Add or Update Item in Cart
+        // 4. Add or Update Item in Cart 
         var existingItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == request.ProductId);
         if (existingItem is not null)
         {
@@ -72,7 +81,7 @@ public class AddToCartCommandHandler : ICommandHandler<AddToCartCommand, ErrorOr
         cart.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.SaveChangesAsync();
 
-        // 4. Map & Return Response
+        // 5. Map & Return Response
         var itemDtos = cart.CartItems.Select(item => new CartItemDto(
             item.Id,
             item.ProductId,
