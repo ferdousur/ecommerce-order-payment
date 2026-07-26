@@ -15,24 +15,34 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
     private readonly IRepository<Domain.Entities.Cart> _cartRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly IEnumerable<IPaymentProcessor> _paymentProcessors;
+    private readonly ICurrentUserService _currentUserService;
 
     public CheckoutCommandHandler(
         IRepository<Domain.Entities.Cart> cartRepository,
         IRepository<Order> orderRepository,
-        IEnumerable<IPaymentProcessor> paymentProcessors)
+        IEnumerable<IPaymentProcessor> paymentProcessors,
+        ICurrentUserService currentUserService)
     {
         _cartRepository = cartRepository;
         _orderRepository = orderRepository;
         _paymentProcessors = paymentProcessors;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ErrorOr<CheckoutResponse>> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
-        // 🎯 ২. GetQueryable() + Include দিয়ে CartItems ও Product সহ কার্ট লোড করা
+        // 1. Id Get from Token
+        var userProfileId = _currentUserService.UserId;
+        if (userProfileId is null || userProfileId == Guid.Empty)
+        {
+            return Error.Unauthorized("User.Unauthorized", "User is not authenticated or token is invalid.");
+        }
+
+        // 2. GetQueryable() + Include with CartItems and Product (Using Token's UserProfileId)
         var cart = await _cartRepository.GetQueryable()
             .Include(c => c.CartItems)
             .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserProfileId == request.UserProfileId, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserProfileId == userProfileId.Value, cancellationToken);
 
         if (cart is null || cart.CartItems is null || !cart.CartItems.Any())
         {
@@ -46,11 +56,11 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             return Error.Validation("Cart.InvalidAmount", "Total amount must be greater than zero.");
         }
 
-        // 4. Create Order Entity
+        // 4. Create Order Entity (Using Token's UserProfileId)
         var order = new Order
         {
             Id = Guid.CreateVersion7(),
-            UserProfileId = request.UserProfileId,
+            UserProfileId = userProfileId.Value,
             Status = OrderStatus.Pending,
             TotalAmount = totalAmount,
             ShippingAddress = request.ShippingAddress,

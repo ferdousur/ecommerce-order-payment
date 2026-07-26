@@ -6,8 +6,6 @@ public class CheckoutCommandValidator : AbstractValidator<CheckoutCommand>
 {
     public CheckoutCommandValidator()
     {
-        RuleFor(x => x.UserProfileId)
-            .NotEmpty().WithMessage("UserProfileId is required.");
 
         RuleFor(x => x.CartId)
             .NotEmpty().WithMessage("CartId is required.");
