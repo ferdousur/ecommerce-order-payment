@@ -4,4 +4,4 @@ using ErrorOr;
 
 namespace ECommerce.Application.Features.Cart.Queries.GetMyCart;
 
-public record GetMyCartQuery(Guid UserProfileId) : IQuery<ErrorOr<CartResponseDto>>;
+public record GetMyCartQuery() : IQuery<ErrorOr<CartResponseDto>>;

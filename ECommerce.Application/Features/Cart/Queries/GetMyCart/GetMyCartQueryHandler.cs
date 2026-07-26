@@ -10,19 +10,24 @@ namespace ECommerce.Application.Features.Cart.Queries.GetMyCart;
 public class GetMyCartQueryHandler : IQueryHandler<GetMyCartQuery, ErrorOr<CartResponseDto>>
 {
     private readonly IRepository<Domain.Entities.Cart> _cartRepository;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetMyCartQueryHandler(IRepository<Domain.Entities.Cart> cartRepository)
+    public GetMyCartQueryHandler(IRepository<Domain.Entities.Cart> cartRepository, ICurrentUserService currentUserService)
     {
         _cartRepository = cartRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ErrorOr<CartResponseDto>> Handle(GetMyCartQuery request, CancellationToken cancellationToken)
     {
-        // 🎯 IQueryable দিয়ে কার্ট, তার আইটেম এবং প্রোডাক্ট লোড করা
+        // get id from token
+        var userId = _currentUserService.UserId;
+
+        //  by IQueryable cert, items and product
         var cart = await _cartRepository.GetQueryable()
             .Include(c => c.CartItems)
             .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.UserProfileId == request.UserProfileId);
+            .FirstOrDefaultAsync(c => c.UserProfileId == userId);
 
         if (cart is null)
         {

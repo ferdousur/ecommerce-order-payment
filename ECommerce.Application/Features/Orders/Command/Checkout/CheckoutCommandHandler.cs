@@ -111,12 +111,20 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             return Error.Failure("Payment.Failed", paymentResult.ErrorMessage ?? "Payment processing failed.");
         }
 
-        // 8. Update Payment Entity with Transaction details
+        // 8. Update Payment Entity with Transaction details & Mark Order as Paid/Completed
         payment.TransactionId = paymentResult.TransactionId;
         payment.RawResponse = paymentResult.RawResponse;
-        await _orderRepository.SaveChangesAsync();
 
-        // 9. Return Response
+        // পেমেন্ট সফল হওয়ায় অর্ডার স্ট্যাটাস আপডেট করতে পারেন (যদি আপনার লজিকে প্রয়োজন হয়)
+        // order.Status = OrderStatus.Completed; 
+
+        // 9. Clear / Delete Cart since checkout & payment initiation/success is complete
+        await _cartRepository.DeleteAsync(cart.Id);
+
+        await _orderRepository.SaveChangesAsync();
+        await _cartRepository.SaveChangesAsync(); // কার্ট ডিলিট সেভ করার জন্য
+
+        // 10. Return Response
         return new CheckoutResponse(
             OrderId: order.Id,
             OrderStatus: order.Status,
