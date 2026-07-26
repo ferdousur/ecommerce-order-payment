@@ -25,7 +25,7 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
 
     public async Task<ErrorOr<Success>> Handle(ExecuteBkashPaymentCommand request, CancellationToken cancellationToken)
     {
-        // ১. bKash Processor খুঁজে বের করা
+
         var processor = _paymentProcessors.FirstOrDefault(p => p.Provider == PaymentProvider.Bkash);
         if (processor == null)
         {
@@ -35,7 +35,7 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
             );
         }
 
-        // ২. Payment ID দিয়ে অর্ডারটি খুঁজে বের করা
+
         var order = await _orderRepository.GetQueryable()
             .Include(o => o.OrderItems)
             .Include(o => o.Payment)
@@ -49,13 +49,13 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
             );
         }
 
-        // ৩. Order কি আগেই Paid? (Double Execution প্রতিরোধ)
+
         if (order.Status == OrderStatus.Paid || (order.Payment != null && order.Payment.Status == PaymentStatus.Success))
         {
-            return Result.Success; // আগেই পেইড হয়ে থাকলে সফল হিসেবে রিটার্ন করবে
+            return Result.Success;
         }
 
-        // ৪. bKash Execute API কল করা
+
         var executeResult = await processor.CompletePaymentAsync(request.PaymentId, cancellationToken);
 
         if (!executeResult.IsSuccess)
@@ -66,7 +66,7 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
             );
         }
 
-        // ৫. Order & Payment Status আপডেট
+
         order.Status = OrderStatus.Paid;
         if (order.Payment != null)
         {
@@ -75,7 +75,7 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
             order.Payment.TransactionId = executeResult.TransactionId ?? request.PaymentId;
         }
 
-        // ৬. স্টক কমানোর প্রসেস (Stock Verification & Deduction)
+
         foreach (var item in order.OrderItems)
         {
             var product = await _productRepository.GetQueryable()
@@ -83,19 +83,19 @@ public class ExecuteBkashPaymentCommandHandler : IRequestHandler<ExecuteBkashPay
 
             if (product != null)
             {
-                // স্টক পর্যাপ্ত আছে কি না সেফটি চেক
+
                 if (product.Stock >= item.Quantity)
                 {
                     product.Stock -= item.Quantity;
                 }
                 else
                 {
-                    product.Stock = 0; // Negative Stock যাতে না হয়
+                    product.Stock = 0;
                 }
             }
         }
 
-        // ৭. ডাটাবেসে পরিবর্তনগুলো সেভ করা
+
         await _orderRepository.SaveChangesAsync();
         await _productRepository.SaveChangesAsync();
 

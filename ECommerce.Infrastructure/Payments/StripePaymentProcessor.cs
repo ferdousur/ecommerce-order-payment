@@ -12,7 +12,7 @@ public class StripePaymentProcessor : IPaymentProcessor
 
     public PaymentProvider Provider => PaymentProvider.Stripe;
 
-    // 🎯 Constructor Dependency Injection-er maddhome IConfiguration niye asha
+
     public StripePaymentProcessor(IConfiguration configuration)
     {
         _configuration = configuration;
@@ -22,7 +22,7 @@ public class StripePaymentProcessor : IPaymentProcessor
     {
         try
         {
-            // 🎯 appsettings.json theke SecretKey niye Stripe SDK global config-e set kora
+
             var secretKey = _configuration["Stripe:SecretKey"];
             StripeConfiguration.ApiKey = secretKey;
 

@@ -27,7 +27,7 @@ public class BkashPaymentProcessor : IPaymentProcessor
 
     public PaymentProvider Provider => PaymentProvider.Bkash;
 
-    // ১. Create Payment (Checkout URL জেনারেট করা)
+
     public async Task<PaymentResult> ProcessPaymentAsync(PaymentRequest request)
     {
         try

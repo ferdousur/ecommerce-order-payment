@@ -23,7 +23,7 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
 
     public async Task<ErrorOr<PaymentResult>> Handle(CreateBkashPaymentCommand request, CancellationToken cancellationToken)
     {
-        // ১. bKash Processor চেক
+
         var processor = _paymentProcessors.FirstOrDefault(p => p.Provider == PaymentProvider.Bkash);
         if (processor == null)
         {
@@ -33,7 +33,7 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
             );
         }
 
-        // ২. ডাটাবেসে Order আছে কি না চেক
+
         var order = await _orderRepository.GetQueryable()
             .Include(o => o.Payment)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
@@ -46,7 +46,7 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
             );
         }
 
-        // ৩. Order ইতোমধ্যে Paid কি না চেক (Double Payment প্রতিরোধ)
+
         if (order.Status == OrderStatus.Paid || (order.Payment != null && order.Payment.Status == PaymentStatus.Success))
         {
             return Error.Conflict(
@@ -55,7 +55,7 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
             );
         }
 
-        // ৪. bKash API-তে Create Payment রিকোয়েস্ট পাঠানো
+
         var paymentRequest = new PaymentRequest(
             OrderId: order.Id,
             Amount: request.Amount > 0 ? request.Amount : order.TotalAmount,
@@ -72,7 +72,7 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
             );
         }
 
-        // 🔑 ৫. সবচেয়ে গুরুত্বপূর্ণ: bKash-এর PaymentID ডাটাবেসে সেভ করা
+
         if (order.Payment == null)
         {
             order.Payment = new Payment
@@ -81,14 +81,14 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
                 OrderId = order.Id,
                 Provider = PaymentProvider.Bkash,
                 Status = PaymentStatus.Pending,
-                TransactionId = result.TransactionId // TR0011c... সেভ হবে
+                TransactionId = result.TransactionId
             };
         }
         else
         {
             order.Payment.Provider = PaymentProvider.Bkash;
             order.Payment.Status = PaymentStatus.Pending;
-            order.Payment.TransactionId = result.TransactionId; // আপডেট করা হলো
+            order.Payment.TransactionId = result.TransactionId;
         }
 
         await _orderRepository.SaveChangesAsync();
