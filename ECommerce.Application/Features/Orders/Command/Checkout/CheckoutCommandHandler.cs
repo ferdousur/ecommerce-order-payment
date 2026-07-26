@@ -42,7 +42,7 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
         var cart = await _cartRepository.GetQueryable()
             .Include(c => c.CartItems)
             .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserProfileId == userProfileId.Value, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == userProfileId && c.UserProfileId == userProfileId.Value, cancellationToken);
 
         if (cart is null || cart.CartItems is null || !cart.CartItems.Any())
         {

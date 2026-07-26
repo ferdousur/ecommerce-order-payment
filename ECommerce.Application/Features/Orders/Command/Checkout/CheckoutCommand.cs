@@ -6,7 +6,6 @@ using ErrorOr;
 namespace ECommerce.Application.Features.Orders.Commands.Checkout;
 
 public record CheckoutCommand(
-    Guid CartId,
     PaymentProvider PaymentProvider,
     string ShippingAddress
 ) : ICommand<ErrorOr<CheckoutResponse>>;
