@@ -5,6 +5,5 @@ using MediatR;
 namespace ECommerce.Application.Features.Payments.Commands.CreateBkashPayment;
 
 public record CreateBkashPaymentCommand(
-    Guid OrderId,
-    decimal Amount
+    Guid OrderId
 ) : IRequest<ErrorOr<PaymentResult>>;

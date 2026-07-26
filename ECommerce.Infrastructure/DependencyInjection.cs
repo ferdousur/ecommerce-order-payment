@@ -9,6 +9,7 @@ using ECommerce.Infrastructure.Identity;
 using ECommerce.Application.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 namespace ECommerce.Infrastructure;
 
@@ -33,6 +34,7 @@ public static class DependencyInjections
         services.AddScoped<IPaymentProcessor, BkashPaymentProcessor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
+        services.AddScoped<ICurrencyConverterService, CurrencyConverterService>();
 
         return services;
     }

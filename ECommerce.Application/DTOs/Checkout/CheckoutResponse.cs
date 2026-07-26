@@ -6,6 +6,6 @@ public record CheckoutResponse(
     Guid OrderId,
     OrderStatus OrderStatus,
     PaymentStatus PaymentStatus,
-    string? ClientSecret,   
-    string? RedirectUrl     
+    string? ClientSecret,
+    string? RedirectUrl
 );

@@ -24,6 +24,7 @@ public class PaymentsController : ControllerBase
 
     [HttpPost("webhook")]
     [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> StripeWebhook()
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
@@ -40,6 +41,7 @@ public class PaymentsController : ControllerBase
 
 
     [HttpPost("bkash/create")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> CreateBkashPayment(
         [FromBody] CreateBkashPaymentCommand command,
         CancellationToken cancellationToken)
@@ -54,6 +56,8 @@ public class PaymentsController : ControllerBase
 
 
     [HttpGet("bkash/execute")]
+    [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public async Task<IActionResult> BkashCallback(
         [FromQuery] string paymentID,
         [FromQuery] string status,

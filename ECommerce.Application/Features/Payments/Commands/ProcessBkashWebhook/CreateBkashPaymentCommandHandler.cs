@@ -12,25 +12,24 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
 {
     private readonly IEnumerable<IPaymentProcessor> _paymentProcessors;
     private readonly IRepository<Order> _orderRepository;
+    private readonly ICurrencyConverterService _currencyConverterService;
 
     public CreateBkashPaymentCommandHandler(
         IEnumerable<IPaymentProcessor> paymentProcessors,
-        IRepository<Order> orderRepository)
+        IRepository<Order> orderRepository,
+        ICurrencyConverterService currencyConverterService)
     {
         _paymentProcessors = paymentProcessors;
         _orderRepository = orderRepository;
+        _currencyConverterService = currencyConverterService;
     }
 
     public async Task<ErrorOr<PaymentResult>> Handle(CreateBkashPaymentCommand request, CancellationToken cancellationToken)
     {
-
         var processor = _paymentProcessors.FirstOrDefault(p => p.Provider == PaymentProvider.Bkash);
         if (processor == null)
         {
-            return Error.NotFound(
-                code: "Payment.ProcessorNotFound",
-                description: "bKash payment processor is not configured or registered."
-            );
+            return Error.NotFound("Payment.ProcessorNotFound", "bKash processor is not configured.");
         }
 
 
@@ -40,36 +39,28 @@ public class CreateBkashPaymentCommandHandler : IRequestHandler<CreateBkashPayme
 
         if (order == null)
         {
-            return Error.NotFound(
-                code: "Order.NotFound",
-                description: $"Order with ID {request.OrderId} was not found."
-            );
+            return Error.NotFound("Order.NotFound", $"Order with ID {request.OrderId} was not found.");
         }
-
 
         if (order.Status == OrderStatus.Paid || (order.Payment != null && order.Payment.Status == PaymentStatus.Success))
         {
-            return Error.Conflict(
-                code: "Order.AlreadyPaid",
-                description: "This order has already been paid for."
-            );
+            return Error.Conflict("Order.AlreadyPaid", "This order has already been paid for.");
         }
 
 
+        decimal amountInUsd = order.TotalAmount;
+        decimal amountInBdt = await _currencyConverterService.ConvertUsdToBdtAsync(amountInUsd);
+
         var paymentRequest = new PaymentRequest(
             OrderId: order.Id,
-            Amount: request.Amount > 0 ? request.Amount : order.TotalAmount,
+            Amount: order.TotalAmount,
             Currency: "BDT"
         );
 
         var result = await processor.ProcessPaymentAsync(paymentRequest);
-
         if (!result.IsSuccess)
         {
-            return Error.Failure(
-                code: "Payment.BkashCreationFailed",
-                description: result.ErrorMessage ?? "Failed to create bKash payment session."
-            );
+            return Error.Failure("Payment.BkashCreationFailed", result.ErrorMessage ?? "Failed to create bKash payment session.");
         }
 
 

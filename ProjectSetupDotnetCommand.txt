@@ -95,7 +95,7 @@ dotnet add ECommerce.Application package Microsoft.EntityFrameworkCore
 Test Wallet Credentials:
 Test Wallet Number: 01770618575 (বা অন্য যেকোনো ১১ ডিজিটের বিডি নম্বর)
 Test OTP: 123456
-Test PIN: 12345
+Test PIN: 12121
 
 
 #webhook test

@@ -28,7 +28,7 @@ public class StripePaymentProcessor : IPaymentProcessor
 
             var options = new PaymentIntentCreateOptions
             {
-                Amount = (long)(request.Amount * 100), // Convert Dollars to Cents
+                Amount = (long)(request.Amount * 100), 
                 Currency = request.Currency.ToLower(),
                 PaymentMethodTypes = new List<string> { "card" },
                 Metadata = new Dictionary<string, string>

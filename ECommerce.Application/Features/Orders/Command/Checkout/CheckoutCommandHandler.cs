@@ -16,18 +16,22 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
     private readonly IRepository<Order> _orderRepository;
     private readonly IEnumerable<IPaymentProcessor> _paymentProcessors;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ICurrencyConverterService _currencyConverter;
 
     public CheckoutCommandHandler(
         IRepository<Domain.Entities.Cart> cartRepository,
         IRepository<Order> orderRepository,
         IEnumerable<IPaymentProcessor> paymentProcessors,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        ICurrencyConverterService currencyConverter)
     {
         _cartRepository = cartRepository;
         _orderRepository = orderRepository;
         _paymentProcessors = paymentProcessors;
         _currentUserService = currentUserService;
+        _currencyConverter = currencyConverter;
     }
+
     public async Task<ErrorOr<CheckoutResponse>> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
         // 1. Get User ID from Token
@@ -89,43 +93,70 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
         await _orderRepository.CreateAsync(order);
         await _orderRepository.SaveChangesAsync();
 
-        // 6. Select Strategy
         var processor = _paymentProcessors.FirstOrDefault(p => p.Provider == request.PaymentProvider);
         if (processor is null)
         {
             return Error.Failure("Payment.UnsupportedProvider", $"Payment provider '{request.PaymentProvider}' is not supported.");
         }
 
-        // 7. Execute Payment Request
-        var paymentRequest = new PaymentRequest(order.Id, totalAmount, "usd");
-        var paymentResult = await processor.ProcessPaymentAsync(paymentRequest);
+        string? clientSecret = null;
+        string? redirectUrl = null;
 
-        if (!paymentResult.IsSuccess)
+        if (request.PaymentProvider == PaymentProvider.Stripe)
         {
-            payment.Status = PaymentStatus.Failed;
-            order.Status = OrderStatus.Failed;
-            await _orderRepository.SaveChangesAsync();
+            var paymentRequest = new PaymentRequest(order.Id, totalAmount, "usd");
+            var paymentResult = await processor.ProcessPaymentAsync(paymentRequest);
 
-            return Error.Failure("Payment.Failed", paymentResult.ErrorMessage ?? "Payment processing failed.");
+            if (!paymentResult.IsSuccess)
+            {
+                payment.Status = PaymentStatus.Failed;
+                order.Status = OrderStatus.Failed;
+                await _orderRepository.SaveChangesAsync();
+
+                return Error.Failure("Payment.Failed", paymentResult.ErrorMessage ?? "Payment processing failed.");
+            }
+
+            payment.TransactionId = paymentResult.TransactionId;
+            payment.RawResponse = paymentResult.RawResponse;
+
+            clientSecret = paymentResult.ClientSecret;
+            redirectUrl = paymentResult.RedirectUrl;
         }
+        else if (request.PaymentProvider == PaymentProvider.Bkash)
+        {
 
-        // 8. Update Payment Entity with Transaction details
-        payment.TransactionId = paymentResult.TransactionId;
-        payment.RawResponse = paymentResult.RawResponse;
 
-        // 9. Clear / Delete Cart 
-        await _cartRepository.DeleteAsync(cart.Id);
+
+            decimal bkashAmount = await _currencyConverter.ConvertUsdToBdtAsync(totalAmount);
+
+            var paymentRequest = new PaymentRequest(order.Id, bkashAmount, "bdt");
+            var paymentResult = await processor.ProcessPaymentAsync(paymentRequest);
+
+            if (!paymentResult.IsSuccess)
+            {
+                payment.Status = PaymentStatus.Failed;
+                order.Status = OrderStatus.Failed;
+                await _orderRepository.SaveChangesAsync();
+
+                return Error.Failure("bKash.CreateFailed", paymentResult.ErrorMessage ?? "bKash payment initialization failed.");
+            }
+
+
+            payment.TransactionId = paymentResult.TransactionId;
+            payment.RawResponse = paymentResult.RawResponse;
+            payment.Status = PaymentStatus.Pending;
+            redirectUrl = paymentResult.RedirectUrl;
+        }
 
         await _orderRepository.SaveChangesAsync();
         await _cartRepository.SaveChangesAsync();
 
-        // 10. Return Response
         return new CheckoutResponse(
             OrderId: order.Id,
             OrderStatus: order.Status,
             PaymentStatus: payment.Status,
-            ClientSecret: paymentResult.ClientSecret,
-            RedirectUrl: paymentResult.RedirectUrl
+            ClientSecret: clientSecret,
+            RedirectUrl: redirectUrl
         );
     }
 }

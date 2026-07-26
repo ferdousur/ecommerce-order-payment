@@ -1,7 +1,9 @@
-namespace ECommerce.Application.Interfaces;
 
 using ECommerce.Application.Payments.DTOs;
 using ECommerce.Domain.Enums;
+
+
+namespace ECommerce.Application.Interfaces;
 
 public interface IPaymentProcessor
 {
