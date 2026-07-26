@@ -6,9 +6,6 @@ public class AddToCartCommandValidator : AbstractValidator<AddToCartCommand>
 {
     public AddToCartCommandValidator()
     {
-        RuleFor(x => x.UserProfileId)
-            .NotEmpty()
-            .WithMessage("UserProfileId is required.");
 
         RuleFor(x => x.ProductId)
             .NotEmpty()

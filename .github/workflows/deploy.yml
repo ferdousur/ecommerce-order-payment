@@ -57,3 +57,5 @@ jobs:
           sudo docker-compose up --build -d --no-deps backend
           sudo docker system prune -f
         EOF
+
+        
