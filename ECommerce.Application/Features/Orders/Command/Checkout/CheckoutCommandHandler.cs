@@ -28,21 +28,19 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
         _paymentProcessors = paymentProcessors;
         _currentUserService = currentUserService;
     }
-
     public async Task<ErrorOr<CheckoutResponse>> Handle(CheckoutCommand request, CancellationToken cancellationToken)
     {
-        // 1. Id Get from Token
+        // 1. Get User ID from Token
         var userProfileId = _currentUserService.UserId;
         if (userProfileId is null || userProfileId == Guid.Empty)
         {
             return Error.Unauthorized("User.Unauthorized", "User is not authenticated or token is invalid.");
         }
 
-        // 2. GetQueryable() + Include with CartItems and Product (Using Token's UserProfileId)
+        // 2. Get Cart directly using UserProfileId 
         var cart = await _cartRepository.GetQueryable()
             .Include(c => c.CartItems)
-            .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.Id == userProfileId && c.UserProfileId == userProfileId.Value, cancellationToken);
+            .FirstOrDefaultAsync(c => c.UserProfileId == userProfileId.Value, cancellationToken);
 
         if (cart is null || cart.CartItems is null || !cart.CartItems.Any())
         {
@@ -56,7 +54,7 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             return Error.Validation("Cart.InvalidAmount", "Total amount must be greater than zero.");
         }
 
-        // 4. Create Order Entity (Using Token's UserProfileId)
+        // 4. Create Order Entity
         var order = new Order
         {
             Id = Guid.CreateVersion7(),
@@ -111,18 +109,15 @@ public class CheckoutCommandHandler : ICommandHandler<CheckoutCommand, ErrorOr<C
             return Error.Failure("Payment.Failed", paymentResult.ErrorMessage ?? "Payment processing failed.");
         }
 
-        // 8. Update Payment Entity with Transaction details & Mark Order as Paid/Completed
+        // 8. Update Payment Entity with Transaction details
         payment.TransactionId = paymentResult.TransactionId;
         payment.RawResponse = paymentResult.RawResponse;
 
-        // পেমেন্ট সফল হওয়ায় অর্ডার স্ট্যাটাস আপডেট করতে পারেন (যদি আপনার লজিকে প্রয়োজন হয়)
-        // order.Status = OrderStatus.Completed; 
-
-        // 9. Clear / Delete Cart since checkout & payment initiation/success is complete
+        // 9. Clear / Delete Cart 
         await _cartRepository.DeleteAsync(cart.Id);
 
         await _orderRepository.SaveChangesAsync();
-        await _cartRepository.SaveChangesAsync(); // কার্ট ডিলিট সেভ করার জন্য
+        await _cartRepository.SaveChangesAsync();
 
         // 10. Return Response
         return new CheckoutResponse(
