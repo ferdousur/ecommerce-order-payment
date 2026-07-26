@@ -18,10 +18,11 @@ public class CartsController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet("{userProfileId:guid}")]
-    public async Task<IActionResult> GetMyCart(Guid userProfileId)
+    [HttpGet]
+    public async Task<IActionResult> GetMyCart()
     {
-        var result = await _mediator.Send(new GetMyCartQuery(userProfileId));
+        var query = new GetMyCartQuery();
+        var result = await _mediator.Send(query);
 
         if (result.IsError)
         {
@@ -34,6 +35,7 @@ public class CartsController : ControllerBase
     [HttpPost("add")]
     public async Task<IActionResult> AddToCart([FromBody] AddToCartCommand command)
     {
+
         var result = await _mediator.Send(command);
 
         if (result.IsError)
