@@ -10,19 +10,30 @@ public class GetCustomerOrdersQueryHandler
     : IQueryHandler<GetCustomerOrdersQuery, ErrorOr<List<CustomerDashboardOrderDto>>>
 {
     private readonly IRepository<Domain.Entities.Order> _orderRepository;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetCustomerOrdersQueryHandler(IRepository<Domain.Entities.Order> orderRepository)
+    public GetCustomerOrdersQueryHandler(
+        IRepository<Domain.Entities.Order> orderRepository,
+        ICurrentUserService currentUserService)
     {
         _orderRepository = orderRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ErrorOr<List<CustomerDashboardOrderDto>>> Handle(
         GetCustomerOrdersQuery request,
         CancellationToken cancellationToken)
     {
+        // Token থেকে ইউজার আইডি নেওয়া
+        var currentUser = _currentUserService.UserId;
+        if (currentUser is null || currentUser == Guid.Empty)
+        {
+            return Error.Unauthorized("User.Unauthorized", "User is not authenticated or token is invalid.");
+        }
+
         var orderDtos = await _orderRepository.GetQueryable()
             .AsNoTracking()
-            .Where(o => o.UserProfileId == request.UserProfileId)
+            .Where(o => o.UserProfileId == currentUser.Value)
             .OrderByDescending(o => o.CreatedAt)
             .Select(o => new CustomerDashboardOrderDto
             {

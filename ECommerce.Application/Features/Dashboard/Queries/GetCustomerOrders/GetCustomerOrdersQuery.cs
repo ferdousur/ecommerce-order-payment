@@ -4,5 +4,5 @@ using ErrorOr;
 
 namespace ECommerce.Application.Features.Dashboard.Queries.GetCustomerOrders;
 
-public record GetCustomerOrdersQuery(Guid UserProfileId)
+public record GetCustomerOrdersQuery()
     : IQuery<ErrorOr<List<CustomerDashboardOrderDto>>>;
