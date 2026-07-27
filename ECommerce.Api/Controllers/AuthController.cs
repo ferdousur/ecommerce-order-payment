@@ -1,6 +1,6 @@
 using ECommerce.Application.Features.Auth.Command.LoginUser;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 
 namespace ECommerce.Api.Controllers;

@@ -80,6 +80,15 @@ dotnet add package --project ECommerce.Api Swashbuckle.AspNetCore
   "password": "Admin@123456"
 }
 
+#Register User
+{
+  "firstName": "Ferdousur",
+  "lastName": "Rahman",
+  "userName": "ferdousur.info@gmail.com",
+  "email": "ferdousur.info@gmail.com",
+  "password": "Test@123"
+}
+
 #Customer User Credentials
 {
   "userName": "ferdousur.info@gmail.com",

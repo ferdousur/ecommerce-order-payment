@@ -18,13 +18,11 @@ public class CustomerDashboardController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>
-    /// Logged-in Customer-এর সব অর্ডার ও পেমেন্ট হিস্টোরি রিটার্ন করে
-    /// </summary>
+
     [HttpGet("orders")]
     public async Task<IActionResult> GetMyOrders()
     {
-        // যেহেতু টোকেন থেকে আইডি হ্যান্ডলার নিজে নিয়ে নেবে, তাই এখানে শুধু এম্টি কুয়েরি পাঠালেই হবে
+
         var query = new GetCustomerOrdersQuery();
         var result = await _mediator.Send(query);
 

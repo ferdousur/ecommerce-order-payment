@@ -1,8 +1,7 @@
 using ECommerce.Application.Features.Category.Command.CreateCategory;
-using ECommerce.Application.Features.User.Command.RegisterUser;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 
 namespace ECommerce.Api.Controllers;

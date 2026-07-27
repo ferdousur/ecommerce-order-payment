@@ -115,7 +115,7 @@ public class BkashPaymentProcessor : IPaymentProcessor
         }
     }
 
-    // ২. Complete / Execute Payment
+
     public async Task<PaymentResult> CompletePaymentAsync(string paymentId, CancellationToken cancellationToken = default)
     {
         try
@@ -193,7 +193,7 @@ public class BkashPaymentProcessor : IPaymentProcessor
         }
     }
 
-    // Helper Method: Grant Token
+
     private async Task<string?> GrantTokenAsync()
     {
         try

@@ -1,16 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using ECommerce.Application.Categories.DTOs;
 using ECommerce.Application.Features.Category.Command.CreateCategory;
+using Microsoft.Extensions.Caching.Distributed;
 using ECommerce.Application.Interfaces;
 using ECommerce.Domain.Entities;
-using ErrorOr;
 using FluentAssertions;
-using Microsoft.Extensions.Caching.Distributed;
 using Moq;
-using Xunit;
 
 namespace ECommerce.Tests.Application;
 

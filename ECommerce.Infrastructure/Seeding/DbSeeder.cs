@@ -2,10 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using ECommerce.Infrastructure.DbContext;
 using ECommerce.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Builder;
 using ECommerce.Domain.Constants;
-using Microsoft.EntityFrameworkCore;
 using ECommerce.Domain.Entities;
 
 namespace ECommerce.Infrastructure.Seeding;

@@ -1,5 +1,5 @@
-using ErrorOr;
 using FluentValidation;
+using ErrorOr;
 using MediatR;
 
 namespace ECommerce.Application.Cores.Behaviours;

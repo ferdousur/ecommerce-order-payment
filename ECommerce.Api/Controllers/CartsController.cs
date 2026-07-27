@@ -1,8 +1,8 @@
 using ECommerce.Application.Features.Cart.Commands.AddToCart;
 using ECommerce.Application.Features.Cart.Queries.GetMyCart;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 namespace ECommerce.Api.Controllers;
 

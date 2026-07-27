@@ -1,9 +1,9 @@
+using Microsoft.Extensions.Configuration;
 using ECommerce.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ECommerce.Domain.Entities;
 using ECommerce.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Stripe;
 
 namespace ECommerce.Infrastructure.Payments;

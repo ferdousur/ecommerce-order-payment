@@ -14,12 +14,14 @@ Customers can browse products, manage a cart, check out, and pay via Stripe or b
 | Database | PostgreSQL (via `Npgsql.EntityFrameworkCore.PostgreSQL`) |
 | ORM | Entity Framework Core 10 |
 | Auth | ASP.NET Core Identity + JWT Bearer |
-| CQRS / Mediator | MediatR |
+| CQRS / Mediator | MediatR (custom `ICommand`/`IQuery` abstractions) |
 | Validation | FluentValidation (wired as a MediatR pipeline behavior) |
 | Error Handling | ErrorOr (functional result pattern) + Global Exception Middleware |
 | Caching | Redis (`Microsoft.Extensions.Caching.StackExchangeRedis`) |
 | Payments | Stripe.net (card payments) + bKash Tokenized Checkout (sandbox) |
 | API Docs | Swashbuckle (Swagger) with JWT Bearer support |
+| Testing | xUnit, Moq, FluentAssertions |
+| CI/CD | GitHub Actions — test on every push, deploy to an Azure VM via rsync + docker-compose |
 
 ---
 
@@ -37,12 +39,15 @@ Domain  ←  Application  ←  Infrastructure  ←  Api
 | `ECommerce.Application` | CQRS Commands/Queries, DTOs, validators, interfaces (`IRepository<T>`, `IPaymentProcessor`, `IUserService`) |
 | `ECommerce.Infrastructure` | EF Core `DbContext`, Identity, generic Repository, payment processors, DB seeding |
 | `ECommerce.Api` | Controllers, JWT/Swagger setup, middleware, composition root |
+| `ECommerce.Tests` | Unit and integration tests |
 
 **Key patterns used:**
 - **CQRS** — every use case is a `Command`/`Query` + `Handler`, dispatched through MediatR
 - **Generic Repository** (`IRepository<T>`) — simple CRUD abstraction over EF Core, no Specification pattern (kept intentionally lean for this scope)
 - **Strategy Pattern** — `IPaymentProcessor` has two implementations (`StripePaymentProcessor`, `BkashPaymentProcessor`); the checkout handler picks the right one at runtime based on the selected `PaymentProvider`, with zero changes needed to add a third gateway later
 - **ErrorOr** — handlers return `ErrorOr<T>` instead of throwing for expected failures (not found, validation, conflict); unexpected exceptions are still caught centrally by `GlobalExceptionMiddleware`
+
+See `/Diagrams` for the architecture, ER, and payment-flow diagrams.
 
 ---
 
@@ -77,13 +82,13 @@ Product ──N:N── Category (via ProductCategory join table, additional tag
 
 ### Catalog (Admin-managed, publicly readable)
 - `POST /api/categories` — create category / subcategory
-- `GET` category tree (DFS, cached in Redis)
+- `GET /api/categories/tree` — category tree (DFS, cached in Redis)
 - `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}` — Admin only
 - `GET /api/products`, `GET /api/products/{id}` — public
 - `GET /api/products/recommendations` — DFS category traversal + popularity-based recommendations, cached in Redis
 
 ### Cart & Checkout (Customer only)
-- `GET /api/carts/{userProfileId}` — view cart
+- `GET /api/carts/me` — view cart
 - `POST /api/carts/add` — add/update item in cart
 - `POST /api/orders/checkout` — converts cart → order + payment, calls the selected payment gateway
 
@@ -100,81 +105,66 @@ Product ──N:N── Category (via ProductCategory join table, additional tag
 ## Getting Started
 
 ### Prerequisites
-- .NET 10 SDK
-- Docker (for PostgreSQL and Redis)
+- .NET 10 SDK (for running tests/local dev outside Docker)
+- Docker + Docker Compose
 
-### 1. Start dependencies
+### 1. Clone and configure secrets
 
 ```bash
-# PostgreSQL
-docker run -d --name postgres-db \
-  -e POSTGRES_DB=ECommerce-Order-Payment \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  postgres
-
-# Redis
-docker run -d --name ecommerce-redis -p 6379:6379 -v redis_data:/data redis:alpine
+git clone https://github.com/ferdousur/ecommerce-order-payment.git
+cd ecommerce-order-payment
 ```
 
-### 2. Configure secrets
+Create a `.env` file in the project root:
 
-Set the following in `ECommerce.Api/appsettings.Development.json` or via `dotnet user-secrets` (recommended for anything beyond local sandbox testing):
+```env
+JwtSettings__SecretKey=<your-secret-key>
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=ECommerce-Order-Payment;Username=postgres;Password=postgres",
-    "Redis": "localhost:6379"
-  },
-  "JwtSettings": { "SecretKey": "<your-secret-key>" },
-  "AdminSeed": { "Email": "admin@ecommerce.com", "Password": "Admin@123456" },
-  "Stripe": {
-    "SecretKey": "<stripe-sandbox-secret-key>",
-    "PublishableKey": "<stripe-sandbox-publishable-key>",
-    "WebhookSecret": "<stripe-webhook-signing-secret>"
-  },
-  "Bkash": {
-    "BaseUrl": "https://tokenized.sandbox.bka.sh/v1.2.0-beta",
-    "AppKey": "<bkash-sandbox-app-key>",
-    "AppSecret": "<bkash-sandbox-app-secret>",
-    "Username": "<bkash-sandbox-username>",
-    "Password": "<bkash-sandbox-password>",
-    "CallbackUrl": "http://localhost:5004/api/payments/bkash/execute"
-  }
-}
+AdminSeed__Email=admin@ecommerce.com
+AdminSeed__Password=Admin@123456
+
+Stripe__SecretKey=<stripe-sandbox-secret-key>
+Stripe__PublishableKey=<stripe-sandbox-publishable-key>
+Stripe__WebhookSecret=<stripe-webhook-signing-secret>
+
+Bkash__BaseUrl=https://tokenized.sandbox.bka.sh/v1.2.0-beta
+Bkash__AppKey=<bkash-sandbox-app-key>
+Bkash__AppSecret=<bkash-sandbox-app-secret>
+Bkash__Username=<bkash-sandbox-username>
+Bkash__Password=<bkash-sandbox-password>
+Bkash__CallbackUrl=http://localhost:8080/api/payments/bkash/execute
 ```
 
 > Both Stripe and bKash are configured against **sandbox/test environments only**. bKash has no publicly self-serve production credentials; the sandbox is sufficient to demonstrate the full integration end-to-end.
 
-### 3. Run migrations
+### 2. Start everything with Docker Compose
 
 ```bash
-dotnet ef migrations add InitialMigration \
-  --project ECommerce.Infrastructure --startup-project ECommerce.Api \
-  --output-dir DbContext/Migrations
-
-dotnet ef database update --project ECommerce.Api
+docker-compose up -d --build
 ```
 
-### 4. Run the API
+This starts PostgreSQL, Redis, and the API together, applies migrations, and seeds:
+- `Admin` and `Customer` roles
+- An Admin account (from `AdminSeed` above)
+- Sample Electronics categories and products
 
-```bash
-dotnet run --project ECommerce.Api
+### 3. Open Swagger
+
+```
+http://localhost:8080/swagger/index.html
 ```
 
-On first run, roles (`Admin`, `Customer`), an Admin account, and sample Electronics categories/products are seeded automatically. Swagger UI is available at `/swagger` in development.
+Log in with the seeded Admin via `POST /api/auth`, then use **Authorize** in Swagger with `Bearer <token>` to call protected endpoints.
 
 ---
 
 ## Testing the Payment Flows
 
-**Stripe** — forward webhooks to your local API using the Stripe CLI:
+**Stripe** — expose the API publicly and register a webhook:
 ```bash
-npx @stripe/cli listen --forward-to http://localhost:5004/api/payments/webhook
-npx @stripe/cli trigger payment_intent.succeeded --add payment_intent:metadata[OrderId]=<order-id>
+ngrok http 8080
 ```
+Add `https://<ngrok-subdomain>.ngrok-free.app/api/payments/webhook` as an endpoint in the Stripe Dashboard, listening for `payment_intent.succeeded` and `payment_intent.payment_failed`. Confirm a test PaymentIntent with Stripe's test payment method (`pm_card_visa`) to trigger it end-to-end.
 
 **bKash sandbox test wallet:**
 - Wallet number: any valid-format 11-digit BD number (e.g. `01770618575`)
@@ -183,10 +173,23 @@ npx @stripe/cli trigger payment_intent.succeeded --add payment_intent:metadata[O
 
 ---
 
+## Running Tests
+
+```bash
+dotnet test
+```
+
+## CI/CD
+
+`.github/workflows/deploy.yml` runs the full test suite on every push to `main`, then deploys to an Azure VM by rsyncing the project over SSH and running `docker-compose up --build` remotely.
+
+---
+
 ## Design Notes & Trade-offs
 
-- **Repository pattern over raw `DbContext`** — kept deliberately simple (`IRepository<T>` with basic CRUD + `GetQueryable()`/`GetAsync()` for flexible querying) rather than a full Specification pattern, appropriate for this project's scope.
+- **Repository pattern over raw `DbContext`** — kept deliberately simple (`IRepository<T>` with basic CRUD + `GetQueryable()` for flexible querying) rather than a full Specification pattern, appropriate for this project's scope.
 - **`SaveChangesAsync()` lives in the repository**, not a separate Unit of Work — since all repositories share the same scoped `DbContext`, this still commits atomically; a dedicated `IUnitOfWork` was judged unnecessary overhead here.
 - **Product has both a single `CategoryId` (primary category) and a `ProductCategory` many-to-many join** — this lets a product belong to multiple categories (e.g. a phone tagged in both "Smartphones" and "Electronics") while still having one clear "primary" category for simple listing/filtering scenarios.
 - **Roles use ASP.NET Identity's default many-to-many user-role schema**, with a "one role per user" rule enforced at the application level (registration only ever assigns `Customer`) rather than restructuring Identity's schema.
-- **Admin accounts are never publicly registrable** — seeded on startup — to avoid privilege-escalation via the public registration endpoint.
+- **Admin accounts are never publicly registrable** — seeded on startup — to avoid privilege escalation via the public registration endpoint.
+- **Cart/CartItem concurrency** — repeated adds to the same cart are protected against race conditions using `DbUpdateConcurrencyException.Entries[].ReloadAsync()` combined with a bounded retry loop, since EF Core's identity map means a naive re-query alone won't pick up conflicting changes made by another concurrent request.

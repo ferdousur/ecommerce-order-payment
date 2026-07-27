@@ -1,8 +1,8 @@
-using ECommerce.Domain.Entities;
-using ECommerce.Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using ECommerce.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using ECommerce.Domain.Entities;
 
 namespace ECommerce.Infrastructure.DbContext;
 

@@ -1,18 +1,17 @@
-using ECommerce.Domain.Entities;
-using ECommerce.Domain.Enums;
-using ECommerce.Application.Interfaces;
-using ECommerce.Infrastructure.Payments;
 using Microsoft.Extensions.Configuration;
+using ECommerce.Infrastructure.Payments;
+using ECommerce.Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using Moq;
+using ECommerce.Domain.Entities;
 using FluentAssertions;
+using Moq;
 
 namespace ECommerce.Tests.Payments;
 
 public class StripeWebhookHandlerTests
 {
     private readonly Mock<IRepository<Order>> _orderRepoMock = new();
-    private readonly Mock<IRepository<ECommerce.Domain.Entities.Product>> _productRepoMock = new();
+    private readonly Mock<IRepository<Product>> _productRepoMock = new();
     private readonly Mock<IConfiguration> _configMock = new();
     private readonly Mock<ILogger<StripeWebhookHandler>> _loggerMock = new();
     private readonly StripeWebhookHandler _handler;

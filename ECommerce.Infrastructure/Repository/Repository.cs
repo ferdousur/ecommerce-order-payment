@@ -1,7 +1,7 @@
-using System.Linq.Expressions;
-using ECommerce.Application.Interfaces;
 using ECommerce.Infrastructure.DbContext;
+using ECommerce.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace ECommerce.Infrastructure.Repository;
 

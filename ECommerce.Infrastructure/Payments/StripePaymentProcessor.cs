@@ -1,7 +1,7 @@
-using ECommerce.Application.Interfaces;
 using ECommerce.Application.Payments.DTOs;
-using ECommerce.Domain.Enums;
 using Microsoft.Extensions.Configuration;
+using ECommerce.Application.Interfaces;
+using ECommerce.Domain.Enums;
 using Stripe;
 
 namespace ECommerce.Infrastructure.Payments;
@@ -28,7 +28,7 @@ public class StripePaymentProcessor : IPaymentProcessor
 
             var options = new PaymentIntentCreateOptions
             {
-                Amount = (long)(request.Amount * 100), 
+                Amount = (long)(request.Amount * 100),
                 Currency = request.Currency.ToLower(),
                 PaymentMethodTypes = new List<string> { "card" },
                 Metadata = new Dictionary<string, string>

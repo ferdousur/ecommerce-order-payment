@@ -1,6 +1,6 @@
 using ECommerce.Application.Features.User.Command.RegisterUser;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 
 namespace ECommerce.Api.Controllers;

@@ -1,10 +1,9 @@
-# ==========================================
 # Stage 1: Build & Publish Stage
-# ==========================================
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Optimization: Copy .csproj files first to leverage Docker layer caching
+# Copy .csproj files first to leverage Docker layer caching
 COPY ["ECommerce.Api/ECommerce.Api.csproj", "ECommerce.Api/"]
 COPY ["ECommerce.Application/ECommerce.Application.csproj", "ECommerce.Application/"]
 COPY ["ECommerce.Domain/ECommerce.Domain.csproj", "ECommerce.Domain/"]
@@ -20,9 +19,8 @@ COPY . .
 WORKDIR "/src/ECommerce.Api"
 RUN dotnet publish "ECommerce.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# ==========================================
 # Stage 2: Final Runtime Stage
-# ==========================================
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS final
 WORKDIR /app
 

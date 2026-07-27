@@ -3,9 +3,6 @@ using System.Text.Json;
 
 namespace ECommerce.Api.Middlewares;
 
-/// <summary>
-/// Global middleware to intercept and handle unhandled exceptions across the application pipeline.
-/// </summary>
 public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
