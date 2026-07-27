@@ -15,15 +15,21 @@ public class GetRecommendedProductsQueryHandler
 {
     private readonly IRepository<ProductEntity> _productRepository;
     private readonly IRepository<CategoryEntity> _categoryRepository;
+    private readonly IRepository<Domain.Entities.Cart> _cartRepository;
+    private readonly ICurrentUserService _userContext;
     private readonly IDistributedCache _cache;
 
     public GetRecommendedProductsQueryHandler(
         IRepository<ProductEntity> productRepository,
         IRepository<CategoryEntity> categoryRepository,
+        IRepository<Domain.Entities.Cart> cartRepository,
+        ICurrentUserService userContext,
         IDistributedCache cache)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
+        _cartRepository = cartRepository;
+        _userContext = userContext;
         _cache = cache;
     }
 
@@ -31,44 +37,70 @@ public class GetRecommendedProductsQueryHandler
         GetRecommendedProductsQuery request,
         CancellationToken cancellationToken)
     {
-        // 1. Dynamic Cache Key based on categoryId and limit
-        string cacheKey = $"recommended_products_{request.CategoryId?.ToString() ?? "all"}_{request.Limit}";
+        var userId = _userContext.UserId;
+        var categoryIdsToSearch = new List<Guid>();
+        bool hasCartItems = false;
 
-        // 2. Try fetching from Redis Cache
+        // 1. Check user cart and extract category IDs if items exist
+        if (userId != null)
+        {
+            var userCart = await _cartRepository.GetQueryable()
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(c => c.UserProfileId == userId.Value, cancellationToken);
+
+            if (userCart != null && userCart.CartItems.Any())
+            {
+                hasCartItems = true;
+
+
+                var cartCategoryIds = userCart.CartItems
+                    .Where(item => item.Product != null)
+                    .Select(item => item.Product!.CategoryId)
+                    .Distinct()
+                    .ToList();
+
+                var allCategories = await _categoryRepository.GetQueryable()
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken);
+
+                // Run DFS for each category found in the cart
+                foreach (var catId in cartCategoryIds)
+                {
+                    var rootCategory = allCategories.FirstOrDefault(c => c.Id == catId);
+                    if (rootCategory != null)
+                    {
+                        CollectCategoryIdsDFS(rootCategory, allCategories, categoryIdsToSearch);
+                    }
+                }
+            }
+        }
+
+        // 2. Dynamic Cache Key based on whether cart has items or falling back to latest
+        string cacheKey = hasCartItems
+            ? $"recommended_cart_user_{userId}_{string.Join("_", categoryIdsToSearch.OrderBy(id => id))}_{request.Limit}"
+            : $"recommended_latest_fallback_{request.Limit}";
+
+        // 3. Try fetching from Redis Cache
         var cachedData = await _cache.GetStringAsync(cacheKey, cancellationToken);
         if (!string.IsNullOrEmpty(cachedData))
         {
             var cachedProducts = JsonSerializer.Deserialize<List<RecommendedProductDto>>(cachedData);
-            if (cachedProducts != null)
+            if (cachedProducts != null && cachedProducts.Any())
             {
                 return cachedProducts;
             }
         }
 
-        // 3. Cache Miss: Execute DFS & Database Query
-        var categoryIdsToSearch = new List<Guid>();
-
-        if (request.CategoryId.HasValue)
-        {
-            var allCategories = await _categoryRepository.GetQueryable()
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
-
-            var rootCategory = allCategories.FirstOrDefault(c => c.Id == request.CategoryId.Value);
-
-            if (rootCategory != null)
-            {
-                CollectCategoryIdsDFS(rootCategory, allCategories, categoryIdsToSearch);
-            }
-        }
-
+        // 4. Cache Miss: Build Database Query
         var query = _productRepository.GetQueryable()
             .AsNoTracking()
             .Include(p => p.Category)
             .AsQueryable();
 
-        if (categoryIdsToSearch.Any())
+        if (hasCartItems && categoryIdsToSearch.Any())
         {
+            // Filter by DFS collected categories if cart has items
             query = query.Where(p => categoryIdsToSearch.Contains(p.CategoryId));
         }
 
@@ -85,7 +117,7 @@ public class GetRecommendedProductsQueryHandler
             })
             .ToListAsync(cancellationToken);
 
-        // 4. Store in Redis Cache for 15 Minutes
+        // Store in Redis Cache for 15 Minutes
         var cacheOptions = new DistributedCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
@@ -102,7 +134,10 @@ public class GetRecommendedProductsQueryHandler
         List<CategoryEntity> allCategories,
         List<Guid> categoryIds)
     {
-        categoryIds.Add(currentCategory.Id);
+        if (!categoryIds.Contains(currentCategory.Id))
+        {
+            categoryIds.Add(currentCategory.Id);
+        }
 
         var children = allCategories
             .Where(c => c.ParentCategoryId == currentCategory.Id)

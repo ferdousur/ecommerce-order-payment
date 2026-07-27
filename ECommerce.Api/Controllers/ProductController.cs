@@ -105,10 +105,9 @@ public class ProductsController : ControllerBase
     [HttpGet("recommendations")]
     [AllowAnonymous]
     public async Task<IActionResult> GetRecommendations(
-        [FromQuery] Guid? categoryId,
-        [FromQuery] int limit = 10)
+         int limit = 10)
     {
-        var query = new GetRecommendedProductsQuery(categoryId, limit);
+        var query = new GetRecommendedProductsQuery(limit);
         var result = await _mediator.Send(query);
 
         return result.Match(
