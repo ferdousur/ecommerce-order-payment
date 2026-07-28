@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ECommerce.Domain.Entities;
 
 public class Product
@@ -16,4 +18,6 @@ public class Product
     public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public ICollection<ProductCategory> ProductCategories { get; set; } = [];
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }

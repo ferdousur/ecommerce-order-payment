@@ -102,6 +102,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Payment>()
             .HasIndex(p => p.TransactionId)
             .IsUnique();
+
+        builder.Entity<Product>(entity =>
+         {
+             entity.Property(p => p.RowVersion)
+                 .IsRowVersion();
+         });
     }
 
     public DbSet<Cart> Carts { get; set; }
